@@ -754,9 +754,9 @@ function love.draw()
         if cdmove:peek() then
             love.graphics.setColor(0, 0, 0, flashycolor)
             text:set("DEBUG - Press space to continue")
-            love.graphics.draw(text, window.width - text:getWidth() - 40, window.height - 40)
+            love.graphics.draw(text, window.width - text:getWidth() - 20, window.height - text:getHeight() - 20)
 
-            if keyboard.space.clicked then cdmove:pop() end
+            if keyboard.space.threshold then cdmove:pop() end
         end
     end
 

@@ -28,6 +28,8 @@ function SINGLEDRAW(program, glyphs, width)
     love.graphics.setCanvas(export)
     love.graphics.clear(1, 1, 1)
     function dg(glyph, pos)
+        if not glyph then return end
+        pos = pos or Vector2.new(0, 0)
         local nglyph = {}
         local x, y = pos.x, pos.y
         for i,v in ipairs(glyph) do

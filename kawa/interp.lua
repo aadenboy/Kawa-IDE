@@ -412,7 +412,7 @@ local commands = {
         s.flag1 = s.flag  or s.flag1
         jumpnext(-1, function(v)
             for _,b in ipairs(v.specials) do
-                if s[b] and v ~= c then return true end
+                if s[b] and v ~= c and not v.base:match("jump") then return true end
             end
         end)
         globali = globali - 1
@@ -422,7 +422,7 @@ local commands = {
         s.flag1 = s.flag  or s.flag1
         jumpnext(function(v)
             for _,b in ipairs(v.specials) do
-                if s[b] and v ~= c then return true end
+                if s[b] and v ~= c and not v.base:match("jump") then return true end
             end
         end)
         globali = globali - 1
