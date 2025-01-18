@@ -161,7 +161,7 @@ local commands = {
     seven = function() stream:push(7) end,
     eight = function() stream:push(8) end,
     nine = function() stream:push(9) end,
-    nop = function(m)
+    nop = function(c, m)
         local _ = 0
         local type = (m.withtwo and 1 or 0)
                    + (m.limit   and 2 or 0)
@@ -231,7 +231,7 @@ local commands = {
             end)
         end
     end,
-    input = function(m)
+    input = function(c, m)
         -- with two - if limit, use two as [min, max]
         -- limit - limit characters
         -- as one - parse as number (limit is number range)
@@ -311,7 +311,7 @@ local commands = {
             stream:push(v)
         end
     end,
-    output = function(m)
+    output = function(c, m)
         -- withtwo - convert to base
         -- limit - limit to ascii
         -- asone - utf8
@@ -331,7 +331,7 @@ local commands = {
             cout:push(output)
         until #stream < (m.withtwo and 2 or 1) or not seq
     end,
-    condif = function(m)
+    condif = function(c, m)
         -- withtwo - compare a and b
         -- limit - less than
         -- asone - AND all checks
@@ -399,7 +399,7 @@ local commands = {
             end
         end
     end,
-    condelse = function(m)
+    condelse = function(c, m)
         -- just jump to end
         local c = 1
         jumpnext(function(v)
@@ -407,23 +407,27 @@ local commands = {
             return c == 0
         end)
     end,
-    jumpback = function(m)
+    jumpback = function(c, m, s)
+        s.flag  = s.flag1 or s.flag
+        s.flag1 = s.flag  or s.flag1
         jumpnext(-1, function(v)
             for _,b in ipairs(v.specials) do
-                if b == "flag" then return true end
+                if s[b] and v ~= c then return true end
             end
         end)
         globali = globali - 1
     end,
-    jumpforward = function(m)
+    jumpforward = function(c, m, s)
+        s.flag  = s.flag1 or s.flag
+        s.flag1 = s.flag  or s.flag1
         jumpnext(function(v)
             for _,b in ipairs(v.specials) do
-                if b == "flag" then return true end
+                if s[b] and v ~= c then return true end
             end
         end)
         globali = globali - 1
     end,
-    jumpend = function(m)
+    jumpend = function(c, m)
         globali = #program
     end,
 }
@@ -461,7 +465,9 @@ repeat
     end
     local mods = {}
     for _,v in ipairs(command.modifiers) do mods[v] = true end
-    ;(commands[command.base] or function() end)(mods)
+    local specials = {}
+    for _,v in ipairs(command.specials) do specials[v] = true end
+    ;(commands[command.base] or function() end)(command, mods, specials)
     seq = false
     for i,v in ipairs(command.ups) do
         (diauds[v] or function() end)()

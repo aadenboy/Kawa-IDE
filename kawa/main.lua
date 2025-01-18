@@ -116,7 +116,15 @@ local glyphs = {
     },
     special = {
         none = {top = 2, {1,1.5; 3,1.5;}, {2,2; 2,1;}},
-        flag = {top = 2, {2,1; 2,2; 1,2; 3,2;}}
+        flag1 = {top = 2, {1,2; 3,2;}, {2,2; 2,1;}},
+        flag2 = {top = 2, {1,2; 3,2;}, {1.5,2; 1.5,1;}, {2.5,2; 2.5,1;}},
+        flag3 = {top = 2, {1,2; 3,2;}, {1,2; 1,1;}, {2,2; 2,1;}, {3,2; 3,1;}},
+        flag4 = {top = 2, {1,1; 3,1;}, {2,2; 2,1;}},
+        flag5 = {top = 2, {1,1; 3,1;}, {1.5,2; 1.5,1;}, {2.5,2; 2.5,1;}},
+        flag6 = {top = 2, {1,1; 3,1;}, {1,2; 1,1;}, {2,2; 2,1;}, {3,2; 3,1;}},
+        flag7 = {top = 2, {1,2; 3,2;}, {1,1; 3,1;}, {2,2; 2,1;}},
+        flag8 = {top = 2, {1,2; 3,2;}, {1,1; 3,1;}, {1.5,2; 1.5,1;}, {2.5,2; 2.5,1;}},
+        flag9 = {top = 2, {1,2; 3,2;}, {1,1; 3,1;}, {1,2; 1,1;}, {2,2; 2,1;}, {3,2; 3,1;}},
     }
 }
 for i=1, 8 do
@@ -220,7 +228,7 @@ function candidatify(set, condition)
 end
 function love.textinput(t)
     if not running and expomode == 0 then
-        input = input..t:gsub("[^a-zA-Z.]", ""):lower()
+        input = input..t:gsub("[^a-zA-Z0-9.]", ""):lower()
         candidates = {}
         candfocus = 1
         if subcfocus == 0 then
@@ -413,7 +421,7 @@ function love.update(dt)
         end
         if cmd and keyboard.v.clicked and input == "" and expomode == 0 then
             local newprog = "\n"..love.system.getClipboardText():trim()
-            if newprog:match("[^a-z,;\n]") then goto dontdothat end
+            if newprog:match("[^a-z0-9,;\n]") then goto dontdothat end
             program = {}
             for thing in newprog:gmatch("\n([^\n]+)") do
                 local things = thing:split(";")
@@ -715,7 +723,8 @@ function love.draw()
         love.graphics.polygon("line", reversify{130,b;130,b+30;240,b+30;240,b;})
         stackdata = cstack:peek() or stackdata
         local b = window.height - 40
-        for i,v in ipairs(stackdata.stream) do
+        for i=1, math.min(#stackdata.stream, 11) do
+            local v = stackdata.stream[i]
             love.graphics.setColor(0, 0, 0, 0.5)
             love.graphics.polygon("line", {20,b;20,b+20;110,b+20;110,b;})
             love.graphics.polygon("fill", {20,b;20,b+20;110,b+20;110,b;})
@@ -723,11 +732,13 @@ function love.draw()
             local char
             pcall(function() char = utf8.char(v) end)
             text:set(tostring(v).." "..(ccnames[v] or ("'"..(char or "???").."'") or "???"))
+            if i == 11 and #stackdata.stream > 11 then text:set("+"..(#stackdata.stream - 11).."...") end
             love.graphics.draw(text, 65, b+10, 0, 0.8, 0.8, text:getWidth() / 2, text:getHeight() / 2)
             b = b - 30
         end
         local b = window.height - 40
-        for i,v in ipairs(stackdata.boat) do
+        for i=1, math.min(#stackdata.boat, 11) do
+            local v = stackdata.boat[i]
             love.graphics.setColor(0, 0, 0, 0.5)
             love.graphics.polygon("line", {140,b;140,b+20;230,b+20;230,b;})
             love.graphics.polygon("fill", {140,b;140,b+20;230,b+20;230,b;})
@@ -735,6 +746,7 @@ function love.draw()
             local char
             pcall(function() char = utf8.char(v) end)
             text:set(tostring(v).." "..(ccnames[v] or ("'"..(char or "???").."'") or "???"))
+            if i == 11 and #stackdata.boat > 11 then text:set("+"..(#stackdata.boat - 11).."...") end
             love.graphics.draw(text, 185, b+10, 0, 0.8, 0.8, text:getWidth() / 2, text:getHeight() / 2)
             b = b - 30
         end
