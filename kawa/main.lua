@@ -201,6 +201,7 @@ local candfocus = 1
 local input = ""
 local istart = 1
 local iend = 1
+local expomode = 0
 function candidatify(set, condition)
     condition = condition or function() return true end
     for i,v in pairs(set) do
@@ -218,7 +219,7 @@ function candidatify(set, condition)
     end)
 end
 function love.textinput(t)
-    if not running then
+    if not running and expomode == 0 then
         input = input..t:gsub("[^a-zA-Z.]", ""):lower()
         candidates = {}
         candfocus = 1
@@ -232,6 +233,9 @@ function love.textinput(t)
         else
             candidatify(glyphs.diaud)
         end
+    elseif not running and expomode > 0 then
+        input = input..t:gsub("[^0-9]", ""):lower()
+        input = tostring(math.clamp(tonumber(input) or 0, 0, 1000))
     elseif istart == iend then
         local ast = utf8.offset(input, istart)
         input = input:sub(0, ast - 1)..t..input:sub(ast)
@@ -303,7 +307,7 @@ function love.update(dt)
                 end
             end
         end
-        if keyboard["return"].clicked and input ~= "" and #candidates > 0 then
+        if keyboard["return"].clicked and input ~= "" and #candidates > 0  and expomode == 0 then
             if charfocus == 0 then
                 charfocus = 1
                 table.insert(program, 1, {base = "none", modifiers = {}, ups = {}, downs = {}, specials = {}})
@@ -355,7 +359,7 @@ function love.update(dt)
                 char.downs[actual] = candidate.name
             end
         end
-        if cmd and keyboard.i.threshold then
+        if cmd and keyboard.i.threshold and expomode == 0 and input == "" then
             if subcfocus == 0 then
                 charfocus = charfocus + 1
                 table.insert(program, charfocus, {base = "none", modifiers = {}, ups = {}, downs = {}, specials = {}})
@@ -368,7 +372,7 @@ function love.update(dt)
                 table.insert(char.downs, actual, "none")
             end
         end
-        if keyboard["return"].threshold or keyboard.escape.clicked then
+        if (keyboard["return"].threshold or keyboard.escape.clicked) and expomode == 0 then
             if not keyboard["return"].threshold or input ~= "" then goto nothanks end
             if charfocus == 0 then
                 charfocus = 1
@@ -396,7 +400,7 @@ function love.update(dt)
             canvas = love.graphics.newCanvas(window.width, window.height - 200)
         end
 
-        if cmd and keyboard.c.clicked and input == "" then
+        if cmd and keyboard.c.clicked and input == "" and expomode == 0 then
             local out = ""
             for _,v in ipairs(program) do
                 out = out..v.base
@@ -407,7 +411,7 @@ function love.update(dt)
             end
             love.system.setClipboardText(out)
         end
-        if cmd and keyboard.v.clicked and input == "" then
+        if cmd and keyboard.v.clicked and input == "" and expomode == 0 then
             local newprog = "\n"..love.system.getClipboardText():trim()
             if newprog:match("[^a-z,;\n]") then goto dontdothat end
             program = {}
@@ -544,6 +548,8 @@ local ccnames = {
           "CAN", "EM",  "SUB", "ESC", "FS",  "GS",
           "RS",  "US"
 }
+
+local gw, gb = 100, 0
 function love.draw()
     local flashycolor = math.sin(t*math.pi/1.5) * 0.1 + 0.3
 
@@ -674,7 +680,7 @@ function love.draw()
     camera.position = camera.position + (exppos - camera.position) / 5
     camera.z = camera.z + (zoom - camera.z) / 5
 
-    if input ~= "" and not running then
+    if input ~= "" and not running and expomode == 0 then
         local height = 16*1.5+16
         local px, py = CamPoint((exppos - Vector2.new(2, 4)):unpack())
         love.graphics.setColor(0, 0, 0, 0.5)
@@ -742,6 +748,45 @@ function love.draw()
         end
     end
 
+    if cmd and keyboard.s.clicked and expomode == 0 and input == "" and not running then
+        expomode = 1
+        input = "0"
+    end
+    if expomode > 0 then
+        local w = window.width / 2
+        local h = window.height / 2
+        love.graphics.setColor(0, 0, 0, 0.5)
+        love.graphics.rectangle("fill", w - 150, h - 25, 300, 50)
+        love.graphics.rectangle("line", w - 150, h - 25, 300, 50)
+        love.graphics.setColor(1, 1, 1)
+        text:set(input)
+        love.graphics.draw(text, w - 150 + 10, h, 0, 1.5, 1.5, 0, text:getHeight()/2)
+        if expomode == 1 then
+            text:set("Glyph width in pixels (default = 30)")
+            if keyboard["return"].clicked then
+                gw = tonumber(input)
+                input = "0"
+                expomode = 2
+            end
+        elseif expomode == 2 then
+            text:set("Max line length (0 = ∞)")
+            if keyboard["return"].clicked then
+                gb = tonumber(input)
+                input = ""
+                expomode = 0
+                DOIT(program, glyphs, gw, gb)
+            end
+        end
+        love.graphics.setColor(0, 0, 0, 0.8)
+        love.graphics.draw(text, w - 150 + 10, h - 24, 0, 1, 1, 0, text:getHeight())
+        love.graphics.draw(text, w - 150 + 10, h - 26, 0, 1, 1, 0, text:getHeight())
+        love.graphics.draw(text, w - 150 + 11, h - 25, 0, 1, 1, 0, text:getHeight())
+        love.graphics.draw(text, w - 150 +  9, h - 25, 0, 1, 1, 0, text:getHeight())
+        love.graphics.setColor(1, 1, 1)
+        love.graphics.draw(text, w - 150 + 10, h - 25, 0, 1, 1, 0, text:getHeight())
+        if keyboard.escape.clicked then expomode = 0; input = "" end
+    end
+
     love.graphics.setCanvas()
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(canvas, 0, 0)
@@ -800,8 +845,5 @@ function love.draw()
         love.graphics.draw(canvas2, 0, window.height - 200)
     end
 
-    if cmd and keyboard.s.clicked then
-        DOIT(program, glyphs)
-    end
     love.graphics.setCanvas()
 end
