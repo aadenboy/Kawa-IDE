@@ -111,7 +111,8 @@ local glyphs = {
         poptop = {top = 2, {1,2; 2,1; 3,2;}},
         popbottom = {top = 2, {1,2; 1,1; 3,1; 3,2;}},
         astwo = {top = 1, {1,1; 1.6667,1;}, {2.3333,1; 3,1;}},
-        discard = {top = 2, {1,1; 2,2; 2,1; 3,2;}}
+        discard = {top = 2, {1,1; 2,2; 2,1; 3,2;}},
+        swap = {top = 2, {2,1; 2.5,1.5; 2,2; 1.5,1.5; 2,1;}}
     },
     special = {
         none = {top = 2, {1,1.5; 3,1.5;}, {2,2; 2,1;}},
@@ -182,7 +183,8 @@ local cstep = love.thread.getChannel("step")
 local cdebug = love.thread.getChannel("debug")
 local cstack = love.thread.getChannel("stack")
 local ckill = love.thread.getChannel("kill")
-local cping = love.thread.getChannel("cping")
+local cping = love.thread.getChannel("ping")
+local cdmove = love.thread.getChannel("dmove")
 local interpreter = love.thread.newThread("interp.lua")
 
 window:refresh()
@@ -390,7 +392,7 @@ function love.update(dt)
 
         if cmd and keyboard.r.clicked and input == "" then
             running = true
-            interpreter:start(program)
+            interpreter:start(program, shift and true or false)
             canvas = love.graphics.newCanvas(window.width, window.height - 200)
         end
     else
@@ -401,6 +403,7 @@ function love.update(dt)
             iend = 0
             cin:push("")
             ckill:push(true)
+            cdmove:pop()
             canvas = love.graphics.newCanvas(window.width, window.height)
         end
         if cmd and keyboard.x.clicked then
@@ -409,6 +412,7 @@ function love.update(dt)
             istart = 1
             iend = 0
             ckill:push(true)
+            cdmove:pop()
             canvas = love.graphics.newCanvas(window.width, window.height)
         end
 
@@ -699,6 +703,14 @@ function love.draw()
             text:set(tostring(v).." "..(ccnames[v] or ("'"..(char or "???").."'") or "???"))
             love.graphics.draw(text, 185, b+10, 0, 0.8, 0.8, text:getWidth() / 2, text:getHeight() / 2)
             b = b - 30
+        end
+
+        if cdmove:peek() then
+            love.graphics.setColor(0, 0, 0, flashycolor)
+            text:set("DEBUG - Press space to continue")
+            love.graphics.draw(text, window.width - text:getWidth() - 40, window.height - 40)
+
+            if keyboard.space.clicked then cdmove:pop() end
         end
     end
 

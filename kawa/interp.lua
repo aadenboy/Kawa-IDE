@@ -7,7 +7,8 @@ local cdebug = love.thread.getChannel("debug")
 local cstep = love.thread.getChannel("step")
 local ckill = love.thread.getChannel("kill")
 local cstack = love.thread.getChannel("stack")
-local cping = love.thread.getChannel("cping")
+local cping = love.thread.getChannel("ping")
+local cdmove = love.thread.getChannel("dmove")
 require "love.timer"
 
 
@@ -117,6 +118,18 @@ local diauds = {
         repeat
             stream:pop()
         until #stream == 0 or not seq
+    end,
+    swap = function()
+        if #stream < 2 then return end
+        if seq then
+            local all = {}
+            repeat table.insert(all, stream:pop())          until #stream < 1
+            repeat stream:push(all[1]) table.remove(all, 1) until #all    < 1
+        else
+            local a, b = stream:pop(), stream:pop()
+            stream:push(a)
+            stream:push(b)
+        end
     end
 }
 
@@ -422,6 +435,7 @@ while ckill:pop() do end
 while cstep:pop() do end
 while cdebug:pop() do end
 while cstack:pop() do end
+while cdmove:pop() do end
 while stream:pop() do end
 while boat:poptop() do end
 output = ""
@@ -432,6 +446,8 @@ globali = 1
 ckill:pop()
 cstack:pop()
 cstack:push(package())
+
+local debug = ({...})[2]
 repeat
     cstep:pop()
     cstep:push(globali)
@@ -458,6 +474,7 @@ repeat
     cstack:push(package())
     cdebug:pop()
     cdebug:push(globali.."anew")
+    if debug then cdmove:supply(true) end
 until globali > #program
 ::done::
 ckill:push("Done, "..globali.."/"..#program)
