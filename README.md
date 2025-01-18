@@ -18,10 +18,14 @@ You'll need to have [LÖVE](https://love2d.org/) downloaded. Then, either downlo
 - `Ctrl`+`I` inserts a new command or diacritic in front of where you currently are.
 - Press `Backspace` to blank the command/diacritic you are on, or entirely delete it if it is blank (signified with a pulsing plus). `Ctrl`+`Backspace` delets it immediately.
 - Press `Ctrl`+`R` to run the program.
+- Press `Ctrl`+`Shift`+`R` to run the program in debug mode.
+  - Click `Space` while in debug mode to advance to the next command.
 - Press `Ctrl`+`S` to save the program as an image file and present it.
+- Press `Ctrl`+`C` to save the entire program to the clipboard.
+- Press `Ctrl`+`V` to load a program from the clipboard, replacing the existing one.
 
 ### When running
 - Use `Escape` to halt execution and exit.
 - Use `Ctrl`+`X` to halt execution.
-- A blinking cursor indicates the program is awaiting input, type something in and press enter to confirm.
+- A blinking cursor indicates the program is awaiting input, type something in and press enter to confirm. Basic text editing is present, i.e cursor movement, selection and copy/paste.
   - Note: Your input will not be read if it doesn't follow the `Input` command's restrictions.
