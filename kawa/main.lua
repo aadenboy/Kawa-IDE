@@ -395,6 +395,34 @@ function love.update(dt)
             interpreter:start(program, shift and true or false)
             canvas = love.graphics.newCanvas(window.width, window.height - 200)
         end
+
+        if cmd and keyboard.c.clicked and input == "" then
+            local out = ""
+            for _,v in ipairs(program) do
+                out = out..v.base
+                    ..";"..table.concat(v.modifiers, ",")
+                    ..";"..table.concat(v.ups, ",")
+                    ..";"..table.concat(v.downs, ",")
+                    ..";"..table.concat(v.specials, ",").."\n"
+            end
+            love.system.setClipboardText(out)
+        end
+        if cmd and keyboard.v.clicked and input == "" then
+            local newprog = "\n"..love.system.getClipboardText():trim()
+            if newprog:match("[^a-z,;\n]") then goto dontdothat end
+            program = {}
+            for thing in newprog:gmatch("\n([^\n]+)") do
+                local things = thing:split(";")
+                table.insert(program, {
+                    base = things[1] or "",
+                    modifiers = (things[2] or ""):split(",", true),
+                    ups = (things[3] or ""):split(",", true),
+                    downs = (things[4] or ""):split(",", true),
+                    specials = (things[5] or ""):split(",", true)
+                })
+            end
+        end
+        ::dontdothat::
     else
         if keyboard.escape.clicked then
             running = false

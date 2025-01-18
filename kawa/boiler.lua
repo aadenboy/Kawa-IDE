@@ -24,16 +24,20 @@ function math.sign(n, zero)
     return n == 0 and (zero or 1) or (n / math.abs(n))
 end
 
-function string.split(str, pattern, delim)
-    local got   = {}
-    local delim = delim or "\3"
+function string.split(str, pattern, strict, delim)
+    local got    = {}
+    local delim  = delim or "\3"
     str = str:gsub(pattern, delim)..delim
 
     for m in string.gmatch(str, "(.-)"..delim) do
-        got[#got+1] = m
+        if not strict or #m > 0 then got[#got+1] = m end
     end
 
     return got
+end
+
+function string.trim(s)
+    return s:match("^%s*(.-)%s*$")
 end
 
 function fromRGB(r, g, b, a)
